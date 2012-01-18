@@ -19,7 +19,7 @@ domReady(function(){
                 }
             );
         });
-        
+
         test('Several resources',4,function(){
             toast(
                 [
@@ -52,6 +52,23 @@ domReady(function(){
             );
         });
 
+        test('One complex resource',2,function(){
+            // One JS resource
+            toast(
+                {href: 'resources/f.js', id: 'foo'},
+                function(){
+                    if(!window.f) return false;
+                    ok(true,'One JS resource loaded');
+                }
+            );
+            // One CSS resource
+            toast(
+                {src: 'resources/f.css', media: 'only screen and (max-device-width: 480px)'},
+                function(){
+                    ok(document.styleSheets.length==4,'One CSS resource loaded');
+                }
+            );
+        });
     });
 
     start();

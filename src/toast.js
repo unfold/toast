@@ -1,129 +1,97 @@
-/*
-    toast, just a minimal but yet powerful resource loader
+window.toast = (function(window, document) {
+    var head = document.getElementsByTagName('head')[0];
 
-    Version     : 0.2.9
-    Author      : Aurélien Delogu (dev@dreamysource.fr)
-    Homepage    : https://github.com/pyrsmk/toast
-    License     : MIT
-*/
+    var createNode = function(type, attributes) {
+        var node = document.createElement(type);
 
-/*
-    Load resources
+        if (attributes) {
+            for (var property in attributes) {
+                node[property] = attributes[property];
+            }
+        }
 
-    Parameters
-        Array resources     : resource list
-        Function complete   : called when all resources have been loaded
-*/
-this.toast=function(resources,complete){
-    var toast=this.toast,
-        resource,
-        node,
-        doc=document,
-        head=doc.getElementsByTagName('head')[0],
-        setTimeout=this.setTimeout,
-        createElement='createElement',
-        appendChild='appendChild',
-        addEventListener='addEventListener',
-        onreadystatechange='onreadystatechange',
-        styleSheet='styleSheet',
-        i,
-        scriptsToLoad,
-        // Watch if all resources have been loaded
-        isComplete=function(){
-            if(--scriptsToLoad<1 && complete && complete()===false){
+        return node;
+    };
+
+    var toast = function(resources, callback) {
+        var pending;
+
+        var isComplete = function() {
+            if (!--pending && callback && callback() === false) {
                 setTimeout(isComplete);
             }
-        },
-        // Watch if a CSS resource has been loaded
-        watchStylesheet=function(node){
-            if(node.sheet || node[styleSheet]){
+        };
+
+        var watchStyleSheet = function(node) {
+            if (node.sheet || node.styleSheet) {
+                isComplete();
+            } else{
+                setTimeout(function() {
+                    watchStyleSheet(node);
+                });
+            }
+        };
+
+        var watchScript = function() {
+            if (/ded|co/.test(window.readyState)) {
                 isComplete();
             }
-            else{
-                setTimeout(function(){watchStylesheet(node);});
-            }
-        },
-        // Watch if a script has been loaded
-        watchScript=function(){
-            if(/ded|co/.test(this.readyState)){
-                isComplete();
-            }
-        },
-        // Watch a resource list
-        watchResourceList=function(local,global){
-            return function(){
-                if(local){
+        };
+
+        var watchResourceList = function(local, global) {
+            return function() {
+                if (local) {
                     local();
                 }
+
                 global();
             };
         };
-    // Waiting for DOM readiness
-    if(head || setTimeout(toast)){
-        // Format
-        if(resources===''+resources){
-            resources=[resources];
-        }
-        // Load resources
-        i=scriptsToLoad=resources.length;
-        while(resource=resources[--i]){
-            var attributes, property;
 
-            // Points out to another resource list
-            if(resource.pop){
-                toast(resource[0],watchResourceList(resource[1],isComplete));
+        if (head || setTimeout(toast)) {
+            if (!resources.pop) {
+                resources = [resources];
             }
-            // CSS
-            else if(/\.css$/.test(resource)){
-                node = doc[createElement]('link');
-                attributes = {
-                    rel: styleSheet,
-                    href: resource
-                };
+
+            pending = resources.length;
+
+            for (var i = 0; i < resources.length; i++) {
+                var resource = resources[i];
+                var attributes = {};
+                var href = resource.href || resource.src || resource;
+                var node;
 
                 if (typeof resource == 'object') {
-                    for (property in resource) {
+                    for (var property in resource) {
                         attributes[property] = resource[property];
                     }
                 }
 
-                for (property in attributes) {
-                    //node.setAttribute(property, attributes[property]);
-                    node[property] = attributes[property];
-                }
+                if (resource.pop) {
+                    toast(resource[0], watchResourceList(resource[1], isComplete));
+                } else if (href.substr(-4) == '.css') {
+                    attributes.rel = 'stylesheet';
+                    attributes.href = href;
 
-                head[appendChild](node);
+                    node = createNode('link', attributes);
 
-                watchStylesheet(node);
-            }
-            // JS
-            else{
-                node=doc[createElement]('script');
-                attributes = {
-                    src: resource
-                };
+                    watchStyleSheet(node);
+                } else {
+                    attributes.src = href;
 
-                if (typeof resource == 'object') {
-                    for (property in resource) {
-                        attributes[property] = resource[property];
+                    node = createNode('script', attributes);
+
+                    if (node.onreadystatechange === null) {
+                        node.onreadystatechange = watchScript;
+                    } else {
+                        node.onload = isComplete;
                     }
                 }
 
-                for (property in attributes) {
-                    node[property] = attributes[property];
-                }
-
-                head[appendChild](node);
-                // Watching loading state
-                if(node[onreadystatechange]===null){
-                    // Trident, Presto
-                    node[onreadystatechange]=watchScript;
-                }
-                else{
-                    // Webkit, Gecko (also IE>=9 and Presto)
-                    node.onload=isComplete;
-                }
+                head.appendChild(node);
             }
         }
-    }
-};
+    };
+
+    return toast;
+})(this, this.document);
