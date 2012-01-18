@@ -9,7 +9,7 @@
 
 /*
     Load resources
-    
+
     Parameters
         Array resources     : resource list
         Function complete   : called when all resources have been loaded
@@ -67,25 +67,52 @@ this.toast=function(resources,complete){
         // Load resources
         i=scriptsToLoad=resources.length;
         while(resource=resources[--i]){
+            var attributes, property;
+
             // Points out to another resource list
             if(resource.pop){
                 toast(resource[0],watchResourceList(resource[1],isComplete));
             }
             // CSS
             else if(/\.css$/.test(resource)){
-                // Create LINK element
-                node=doc[createElement]('link');
-                node.rel=styleSheet;
-                node.href=resource;
+                node = doc[createElement]('link');
+                attributes = {
+                    rel: styleSheet,
+                    href: resource
+                };
+
+                if (typeof resource == 'object') {
+                    for (property in resource) {
+                        attributes[property] = resource[property];
+                    }
+                }
+
+                for (property in attributes) {
+                    //node.setAttribute(property, attributes[property]);
+                    node[property] = attributes[property];
+                }
+
                 head[appendChild](node);
-                // Watching loading state
+
                 watchStylesheet(node);
             }
             // JS
             else{
-                // Create SCRIPT element
                 node=doc[createElement]('script');
-                node.src=resource;
+                attributes = {
+                    src: resource
+                };
+
+                if (typeof resource == 'object') {
+                    for (property in resource) {
+                        attributes[property] = resource[property];
+                    }
+                }
+
+                for (property in attributes) {
+                    node[property] = attributes[property];
+                }
+
                 head[appendChild](node);
                 // Watching loading state
                 if(node[onreadystatechange]===null){
