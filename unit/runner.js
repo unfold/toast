@@ -20,34 +20,18 @@ domReady(function(){
             );
         });
 
-        test('Several resources',4,function(){
+        test('Several resources',2,function(){
             toast(
                 [
                     'resources/b.js',
                     'resources/b.css',
                     'resources/c.js',
-                    'resources/c.css',
-                    [
-                        [
-                            'resources/d.js',
-                            [
-                                'resources/e.js',
-                                function(){
-                                    if(!window.e) return false;
-                                    ok(true,'One JS resource loaded [level 3]');
-                                }
-                            ]
-                        ],
-                        function(){
-                            if(!window.d) return false;
-                            ok(true,'Two JS resources loaded [level 2]');
-                        }
-                    ]
+                    'resources/c.css'
                 ],
                 function(){
                     if(!window.b && !window.c) return false;
-                    ok(true,'Four JS resources loaded [level 1]');
-                    ok(document.styleSheets.length==3,'Two CSS resources loaded [level 1]');
+                    ok(true,'Four JS resources loaded');
+                    ok(document.styleSheets.length==3,'Two CSS resources loaded');
                 }
             );
         });

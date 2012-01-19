@@ -38,16 +38,6 @@ window.toast = (function(window, document) {
             }
         };
 
-        var watchResourceList = function(local, global) {
-            return function() {
-                if (local) {
-                    local();
-                }
-
-                global();
-            };
-        };
-
         if (head || setTimeout(toast)) {
             if (!resources.pop) {
                 resources = [resources];
@@ -67,9 +57,7 @@ window.toast = (function(window, document) {
                     }
                 }
 
-                if (resource.pop) {
-                    toast(resource[0], watchResourceList(resource[1], isComplete));
-                } else if (href.substr(-4) == '.css') {
+                if (/\.css$/.test(href)) {
                     attributes.rel = 'stylesheet';
                     attributes.href = href;
 
